@@ -1,54 +1,18 @@
-# Transaction Starter Project
+# Toucan Payments - Transaction Processing Service
 
-This is the starter project for the Customer Transactions exercise.
+# 1. Understanding of the Problem
 
-## Before you start
-
-The first thing you should do after cloning the repository is:
-
-### Linux / macOS
-
-```bash
-./mvnw clean test
-```
-
-### Windows
-
-```bat
-mvnw.cmd clean test
-```
-
-The sample test should pass before you begin implementing the exercise.
-
-## What is already provided
-
-- Java 17
-- Spring Boot
-- Maven wrapper
-- Spring Web
-- Spring Data JPA
-- H2 embedded database
-- JUnit / Spring Boot Test
-- A sample REST endpoint: `GET /api/sample`
-- A sample test that loads the Spring context
+This project implements a small transaction-processing REST service using Java, Spring Boot, Spring Data JPA, and an H2 embedded database.
 
 
-## Exercise
 
-Implement these four operations:
+The application implements the four required operations:
+1. Create a transaction
+2. Get a transaction by Transaction ID
+3. Update the status of an existing transaction
+4. Get all transactions for a Customer ID
 
-1. Create transaction
-2. Get transaction
-3. Update transaction status
-4. Get all transactions for a customer
-
-
-You may change the surrounding design if you believe your solution is better.
-
-## Transaction fields
-
-Every transaction contains:
-
+Each transaction contains:
 - Transaction ID
 - Customer ID
 - Amount
@@ -56,54 +20,135 @@ Every transaction contains:
 - Transaction Type
 - Transaction Status
 
-### Validation rules
 
-Define what makes a transaction valid. At minimum, consider:
+# 2. Assumptions
 
-- Transaction ID
-- Customer ID
-- Amount
-- Currency
-- Transaction type
-- Initial status
+The following assumptions were made:
 
-Also explain any business validation you add beyond the annotations already supplied.
+- Transaction IDs are unique.
+- Transaction IDs and Customer IDs cannot be blank.
+- Amount must be greater than zero.
+- Currency must be a three-character currency code.
+- Transaction Type and Transaction Status are required.
+- A newly created transaction must start with PENDING status.
+- A transaction must exist before its status can be updated.
+- COMPLETED, FAILED, and CANCELLED are treated as terminal statuses.
+- A transaction in a terminal status cannot be changed to another status.
 
-## API skeleton
+# 3. Validation Rules
 
-### Create
+The following validation rules are applied when creating a transaction:
 
-`TODO`
+- Transaction ID is required and cannot be blank.
+- Customer ID is required and cannot be blank.
+- Amount is required and must be greater than 0.
+- Currency is required and must contain exactly 3 characters.
+- Transaction type is required.
+- Initial transaction status is required.
+
+Additional business validation:
+
+- Duplicate Transaction IDs are rejected with HTTP 409 Conflict.
+- New transactions must start with PENDING status.
+- A transaction must exist before its status can be updated.
+- A transaction cannot be changed after reaching a terminal status.
+- Invalid request data returns HTTP 400 Bad Request.
+- A missing transaction returns HTTP 404 Not Found.
+
+# 4. API Endpoints
+
+# Create Transaction
+
+POST /api/transactions
+
+Example request:
+
+{
+  "transactionId": "TXN001",
+  "customerId": "CUST001",
+  "amount": 1000.00,
+  "currency": "INR",
+  "transactionType": "PAYMENT",
+  "transactionStatus": "PENDING"
+}
+
+Successful creation returns HTTP 201 Created.
+
+# Get Transaction
+
+GET /api/transactions/{transactionId}
 
 Example:
 
-```
-TODO
-```
+GET /api/transactions/TXN001
 
-### Get
 
-`TODO`
+# Update Transaction Status
 
-### Update status
+PATCH /api/transactions/{transactionId}/status
 
-`TODO`
+Example request:
+
+{
+  "status": "COMPLETED"
+}
+
+
+# Get Customer Transactions
+
+GET /api/customers/{customerId}/transactions
 
 Example:
 
-```
-TODO
-```
+GET /api/customers/CUST001/transactions
 
-### Get customer transactions
 
-`TODO`
+# 5. Error Handling
 
-## Testing expectations
+A global exception handler provides consistent HTTP responses:
 
-Add at least four meaningful tests.
+- HTTP 400 Bad Request for validation and business-validation failures
+- HTTP 404 Not Found for missing transactions
+- HTTP 409 Conflict for duplicate Transaction IDs
 
-Your tests should cover more than just application startup. 
+Example:
 
-You decide exactly which tests provide the best coverage.
+{
+  "error": "Transaction not found: TXN999"
+}
+
+
+# 6. Testing Approach
+
+Automated API tests are implemented using JUnit and Spring Boot MockMvc.
+
+The test suite covers:
+- Successful transaction creation
+- Transaction retrieval
+- Transaction status update
+- Retrieving customer transactions
+- Validation failure
+- Duplicate Transaction ID
+- Invalid status transition
+
+The project is tested using:
+
+./mvnw clean test
+
+
+# 7. Known Limitations
+
+- H2 is used as the database because it is provided by the starter project.
+- Authentication and authorization are not implemented.
+- Error responses are simple.
+- The transaction model contains only the fields required for this exercise.
+- No external payment provider integration is implemented.
+
+
+# 8. What I Would Improve With More Time
+
+- Add authentication and authorization.
+- Add production database configuration.
+- Introduce a dedicated error-response DTO.
+- Add more unit tests for service-layer business rules.
 
